@@ -75,5 +75,4 @@ tools defined in `backend/app/agent/tools.py`:
 5. `schedule_follow_up` — capture a follow-up commitment tied to an HCP.
 
 See `docs/ARCHITECTURE.md §5` for the full design write-up, including why each tool
-exists and how it's demoed.
-"# HCP_CRM" 
+exists and how it's demoed. 
