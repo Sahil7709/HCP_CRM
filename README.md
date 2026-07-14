@@ -76,3 +76,4 @@ tools defined in `backend/app/agent/tools.py`:
 
 See `docs/ARCHITECTURE.md §5` for the full design write-up, including why each tool
 exists and how it's demoed.
+"# HCP_CRM" 
