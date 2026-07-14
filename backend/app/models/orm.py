@@ -3,9 +3,9 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import (
-    Column, String, Text, DateTime, Enum, ForeignKey, Numeric, Boolean, Integer, JSON
+    Column, String, Text, DateTime, Enum, ForeignKey, Numeric, Boolean, Integer
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -91,7 +91,7 @@ class Interaction(Base):
 
     entry_mode = Column(Enum(EntryMode), nullable=False, default=EntryMode.STRUCTURED_FORM)
     status = Column(Enum(InteractionStatus), nullable=False, default=InteractionStatus.DRAFT)
-    compliance_flags = Column(JSON, default=list)  # e.g. ["OFF_LABEL_MENTION"]
+    compliance_flags = Column(JSONB, default=list)  # e.g. ["OFF_LABEL_MENTION"]
 
     # raw transcript retained for audit when logged conversationally
     source_transcript = Column(Text)

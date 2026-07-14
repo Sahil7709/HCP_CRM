@@ -25,6 +25,23 @@ EDITABLE_INTERACTION_FIELDS = {
 }
 
 
+_HONORIFICS = {"dr", "dr.", "mr", "mr.", "mrs", "mrs.", "ms", "ms.", "prof", "prof."}
+
+
+def _split_name(hcp_name: str) -> tuple[str, str]:
+    """Shared by every HCP name lookup/creation path so "Dr. Ananya Rao" and
+    "Ananya Rao" resolve to the same first/last split — used consistently by
+    _resolve_hcp (create-or-find) and _find_hcp_by_name (read-only find).
+    """
+    tokens = hcp_name.strip().split()
+    if tokens and tokens[0].lower() in _HONORIFICS:
+        tokens = tokens[1:]
+    if not tokens:
+        return "", ""
+    first, *rest = tokens
+    return first, " ".join(rest)
+
+
 def _get_or_create_product(db: Session, name: str) -> Product:
     product = db.query(Product).filter(Product.name.ilike(name)).first()
     if not product:
@@ -36,8 +53,7 @@ def _get_or_create_product(db: Session, name: str) -> Product:
 
 def _find_hcp_by_name(db: Session, hcp_name: str) -> Optional[HCP]:
     """Read-only lookup — unlike _resolve_hcp, never creates a stub record."""
-    parts = hcp_name.strip().split(" ", 1)
-    first, last = (parts[0], parts[1] if len(parts) > 1 else "")
+    first, last = _split_name(hcp_name)
     query = db.query(HCP).filter(HCP.first_name.ilike(f"%{first}%"))
     if last:
         query = query.filter(HCP.last_name.ilike(f"%{last}%"))
@@ -50,8 +66,7 @@ def _resolve_hcp(db: Session, hcp_id: str | None, hcp_name: str | None) -> HCP:
         if hcp:
             return hcp
     if hcp_name:
-        parts = hcp_name.strip().split(" ", 1)
-        first, last = (parts[0], parts[1] if len(parts) > 1 else "")
+        first, last = _split_name(hcp_name)
         hcp = db.query(HCP).filter(HCP.first_name.ilike(first), HCP.last_name.ilike(last)).first()
         if hcp:
             return hcp
