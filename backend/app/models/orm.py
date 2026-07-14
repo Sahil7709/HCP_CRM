@@ -74,7 +74,10 @@ class Interaction(Base):
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     hcp_id = Column(UUID(as_uuid=False), ForeignKey("hcps.id"), nullable=False)
-    rep_id = Column(UUID(as_uuid=False), nullable=False)  # FK to field-rep/user table (owned by IAM module)
+    # Not a UUID FK on purpose: there's no IAM/users module in this deliverable
+    # (see docs/ARCHITECTURE.md §8), so rep_id is whatever opaque id the auth
+    # layer hands us — a real UUID in production, a placeholder string in dev.
+    rep_id = Column(String(64), nullable=False)
 
     interaction_type = Column(Enum(InteractionType), nullable=False)
     interaction_datetime = Column(DateTime, nullable=False)
@@ -172,7 +175,7 @@ class FollowUp(Base):
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     hcp_id = Column(UUID(as_uuid=False), ForeignKey("hcps.id"), nullable=False)
-    rep_id = Column(UUID(as_uuid=False), nullable=False)
+    rep_id = Column(String(64), nullable=False)
     interaction_id = Column(UUID(as_uuid=False), ForeignKey("interactions.id"), nullable=True)
 
     action = Column(Text, nullable=False)

@@ -32,7 +32,9 @@ CREATE TABLE products (
 CREATE TABLE interactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hcp_id UUID NOT NULL REFERENCES hcps(id),
-    rep_id UUID NOT NULL,
+    -- Not a UUID FK on purpose: there's no IAM/users table in this deliverable,
+    -- so rep_id is whatever opaque id the auth layer hands us.
+    rep_id VARCHAR(64) NOT NULL,
     interaction_type interaction_type NOT NULL,
     interaction_datetime TIMESTAMP NOT NULL,
     duration_minutes INTEGER,
@@ -84,7 +86,7 @@ CREATE TABLE materials_shared (
 CREATE TABLE follow_ups (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hcp_id UUID NOT NULL REFERENCES hcps(id),
-    rep_id UUID NOT NULL,
+    rep_id VARCHAR(64) NOT NULL,
     interaction_id UUID REFERENCES interactions(id),
     action TEXT NOT NULL,
     due_date TIMESTAMP,
