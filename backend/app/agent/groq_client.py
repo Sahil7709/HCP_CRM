@@ -3,16 +3,18 @@ Thin wrapper around the Groq API (https://console.groq.com/docs/models).
 
 Model routing strategy
 -----------------------
-gemma2-9b-it        -> fast, cheap, used for the high-frequency, low-ambiguity
+llama-3.1-8b-instant -> fast, cheap, used for the high-frequency, low-ambiguity
                         job of pulling structured fields out of a rep's raw
-                        sentence on every turn of the chat.
+                        sentence on every turn of the chat. Standing in for
+                        gemma2-9b-it, which the assignment names but Groq has
+                        since decommissioned (see docs/ARCHITECTURE.md §6) —
+                        same role: small, fast, instruction-tuned.
 llama-3.3-70b-versatile -> reserved for the lower-frequency, higher-stakes
-                        steps: compliance/off-label screening and writing the
-                        natural-language clarifying question / confirmation
-                        summary that the rep actually reads. These need better
-                        instruction-following and nuance than field extraction
-                        does, and they run once per turn (not once per field),
-                        so the extra latency/cost is worth it.
+                        steps: the tool-calling agent loop and compliance/
+                        off-label screening. These need better instruction-
+                        following, nuance, and reliable function-calling than
+                        field extraction does, and they run once per turn (not
+                        once per field), so the extra latency/cost is worth it.
 """
 import json
 import logging
@@ -54,7 +56,7 @@ def _chat(model: str, system_prompt: str, user_prompt: str, json_mode: bool = Fa
 
 
 def extract_fields(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
-    """Field extraction — routed to gemma2-9b-it."""
+    """Field extraction — routed to llama-3.1-8b-instant."""
     raw = _chat(settings.groq_extraction_model, system_prompt, user_prompt, json_mode=True, temperature=0.0)
     try:
         return json.loads(raw)
@@ -71,7 +73,7 @@ def reason(system_prompt: str, user_prompt: str, json_mode: bool = False) -> str
 def get_tool_calling_llm() -> ChatGroq:
     """The LangGraph agent's "brain": llama-3.3-70b-versatile bound with the five
     sales-activity tools (see app.agent.tools). Field-level extraction stays on the
-    raw Groq client above with gemma2-9b-it — tool-calling reliability on Groq is
+    raw Groq client above with llama-3.1-8b-instant — tool-calling reliability on Groq is
     strongest on the larger instruction-tuned model, and this is a once-per-turn
     call, not a per-field one, so the extra latency is acceptable.
     """

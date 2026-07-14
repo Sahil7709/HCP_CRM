@@ -25,6 +25,20 @@ from app.models.orm import EntryMode
 from app.services import interaction_service
 
 
+def _to_plain(value: Any) -> Any:
+    """StructuredTool validates nested list fields (products_discussed,
+    samples_dropped) into their Pydantic sub-models (ProductArg, SampleArg) but
+    doesn't recursively dump them back to dicts before calling the tool function
+    — interaction_service does plain dict-style access (p["product_name"]), so
+    normalize everything before it gets there.
+    """
+    if isinstance(value, BaseModel):
+        return value.model_dump()
+    if isinstance(value, list):
+        return [_to_plain(v) for v in value]
+    return value
+
+
 def _screen_compliance(notes: str) -> Dict[str, Any]:
     if not notes or not notes.strip():
         return {"flags": [], "rationale": "No notes provided to screen."}
@@ -37,7 +51,7 @@ def _screen_compliance(notes: str) -> Dict[str, Any]:
 
 
 def _tighten_notes(notes: str) -> str:
-    """A small, genuinely-LLM step inside log_interaction: fast gemma2-9b-it pass
+    """A small, genuinely-LLM step inside log_interaction: fast llama-3.1-8b-instant pass
     that condenses a rambling dictated note into 1-2 clean sentences before it's
     saved as the permanent call-report record. Left as-is if already concise.
     """
@@ -118,6 +132,7 @@ def build_tools(rep_id: str) -> List[StructuredTool]:
     def _log_interaction(**kwargs) -> Dict[str, Any]:
         db = SessionLocal()
         try:
+            kwargs = {k: _to_plain(v) for k, v in kwargs.items()}
             kwargs["key_message_notes"] = _tighten_notes(kwargs.get("key_message_notes", ""))
             compliance = _screen_compliance(kwargs.get("key_message_notes", ""))
             interaction = interaction_service.create_interaction(

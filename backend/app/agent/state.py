@@ -27,7 +27,7 @@ class AgentState(TypedDict):
     # callers only need to pass the *new* message(s) on each turn, not full history.
     messages: Annotated[List[BaseMessage], add_messages]
 
-    # Populated every turn by a lightweight extraction pass (gemma2-9b-it), purely to
+    # Populated every turn by a lightweight extraction pass (llama-3.1-8b-instant), purely to
     # drive the frontend's "Extraction Tray" UI — independent of what the tool-calling
     # agent below actually decides to do with the same information.
     extracted: Dict[str, Any]

@@ -5,7 +5,7 @@ Flow
 ----
 extract_tray_node -> agent_node -> (tools_node -> agent_node)* -> END
 
-`extract_tray_node` is a cosmetic, once-per-turn gemma2-9b-it pass that keeps the
+`extract_tray_node` is a cosmetic, once-per-turn llama-3.1-8b-instant pass that keeps the
 frontend's live "Extraction Tray" panel populated; it doesn't gate anything.
 
 `agent_node` is the actual brain: llama-3.3-70b-versatile bound to the five tools

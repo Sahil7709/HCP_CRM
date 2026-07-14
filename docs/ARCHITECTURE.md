@@ -40,7 +40,7 @@ shared backend validation.**
                                        │         tool calls)     │  schedule_follow_up
                                        │        │                              │
                                        │        ▼                              │
-                                       │   Groq API (gemma2-9b-it /            │
+                                       │   Groq API (llama-3.1-8b-instant /    │
                                        │             llama-3.3-70b-versatile)  │
                                        └───────────────────────────────────────┘
 ```
@@ -71,9 +71,9 @@ the "AI path" from becoming a second, looser data model over time.
 
 - `routers/interactions.py` — `POST /api/interactions` for the structured form.
 - `routers/chat.py` — `POST /api/interactions/chat`, one call per chat turn. The route
-  is deliberately thin: it loads/saves LangGraph checkpoint state and, only when the
-  graph reaches `SAVED`, calls the same `interaction_service.create_interaction()` the
-  form uses.
+  is deliberately thin: it just invokes the LangGraph agent (which is itself
+  checkpointed per `session_id`) and relays whatever it returns. Persistence happens
+  inside the agent's `log_interaction` / `edit_interaction` tools, not in the route.
 - `services/interaction_service.py` — the single write path: resolves or stubs the HCP
   record, upserts products, and persists samples/materials/follow-ups. This is where
   "one canonical schema" is actually enforced in code.
@@ -106,7 +106,7 @@ extract_tray_node --> agent_node <--> tools_node
                            END
 ```
 
-`extract_tray_node` is a cosmetic, once-per-turn `gemma2-9b-it` pass that keeps the
+`extract_tray_node` is a cosmetic, once-per-turn `llama-3.1-8b-instant` pass that keeps the
 frontend's "Extraction Tray" panel populated live — it doesn't gate anything.
 `agent_node` is `llama-3.3-70b-versatile` bound to the five tools below via
 `bind_tools`; whenever it emits tool calls, `tools_node` executes them against the
@@ -130,7 +130,7 @@ schema (`LogInteractionArgs`) enumerates every field the CRM needs — HCP name,
 interaction type, date/time, products discussed, sentiment, samples, etc. — and
 `bind_tools`' function-calling forces the model to populate them from the free-text
 conversation before the call is valid. Inside the tool body two more LLM steps run:
-`_tighten_notes` (a fast `gemma2-9b-it` pass) condenses a rambling dictated note
+`_tighten_notes` (a fast `llama-3.1-8b-instant` pass) condenses a rambling dictated note
 into 1-2 clean sentences if it's long, and `_screen_compliance`
 (`llama-3.3-70b-versatile`) screens those notes for off-label/inducement language
 *before* the row is written — an interaction with flags is saved as
@@ -182,10 +182,10 @@ multi-instance deployments.
 
 | Step | Model | Why |
 |---|---|---|
-| Extraction Tray field extraction (`extract_tray_node`, every turn); note-tightening inside `log_interaction` | `gemma2-9b-it` | Runs once per message, needs to be fast and cheap; bounded, schema-shaped tasks with a JSON-mode response, which small instruction-tuned models handle well. |
+| Extraction Tray field extraction (`extract_tray_node`, every turn); note-tightening inside `log_interaction` | `llama-3.1-8b-instant` | Runs once per message, needs to be fast and cheap; bounded, schema-shaped tasks with a JSON-mode response, which small instruction-tuned models handle well. |
 | Tool-calling agent loop (`agent_node`); `check_compliance` reasoning | `llama-3.3-70b-versatile` | Deciding which of the five tools to call (if any) needs stronger instruction-following and function-calling reliability than a small model gives on Groq; off-label detection needs more nuance than slot-filling; runs once per turn, not per field, so the extra latency is worth it. |
 
-`gemma2-9b-it` is called through the raw `groq` Python SDK (`app/agent/groq_client.py`).
+`llama-3.1-8b-instant` is called through the raw `groq` Python SDK (`app/agent/groq_client.py`).
 `llama-3.3-70b-versatile` is additionally wrapped in `langchain_groq.ChatGroq` so it can be
 bound to the five LangChain tools via `.bind_tools()` for the agent loop. Both hit
 `console.groq.com`'s OpenAI-compatible `/chat/completions` endpoint; see
