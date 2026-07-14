@@ -1,0 +1,47 @@
+/*
+  Design direction: a field rep uses this one-handed, often in a clinic
+  hallway between appointments, so the palette favors legibility and calm
+  confidence over decoration. "Ink" (near-black navy) instead of pure black
+  reads less like a generic dashboard; a single desaturated clinical teal
+  marks anything AI-assisted, so the rep always knows when the model is
+  doing the writing versus when they are.
+*/
+:root {
+  --ink-900: #14181f;
+  --ink-700: #333a47;
+  --ink-500: #5b6472;
+  --ink-300: #99a1ad;
+  --ink-100: #e4e7eb;
+  --paper: #f7f8fa;
+  --surface: #ffffff;
+
+  --teal-600: #0f6b66;
+  --teal-500: #16897f;
+  --teal-100: #dcf1ee;
+
+  --amber-500: #b5760a;
+  --amber-100: #fbedd3;
+
+  --red-600: #a3312a;
+  --red-100: #f6dfdd;
+
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-card: 0 1px 2px rgba(20, 24, 31, 0.06), 0 4px 16px rgba(20, 24, 31, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background: var(--paper);
+  color: var(--ink-900);
+  -webkit-font-smoothing: antialiased;
+}
