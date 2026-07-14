@@ -105,6 +105,13 @@ class Interaction(Base):
     samples_dropped = relationship("SampleDrop", back_populates="interaction", cascade="all, delete-orphan")
     materials_shared = relationship("MaterialShared", back_populates="interaction", cascade="all, delete-orphan")
 
+    @property
+    def hcp_name(self) -> str | None:
+        """Denormalized for InteractionOut, which speaks hcp_name rather than
+        forcing every API consumer to resolve hcp_id via a second lookup.
+        """
+        return self.hcp.full_name if self.hcp else None
+
 
 class InteractionProduct(Base):
     __tablename__ = "interaction_products"
@@ -117,6 +124,13 @@ class InteractionProduct(Base):
 
     interaction = relationship("Interaction", back_populates="products_discussed")
     product = relationship("Product")
+
+    @property
+    def product_name(self) -> str | None:
+        """Denormalized for the API response schema (InteractionOut), which
+        speaks product_name rather than product_id — the rep never sees IDs.
+        """
+        return self.product.name if self.product else None
 
 
 class SampleDrop(Base):
@@ -131,6 +145,10 @@ class SampleDrop(Base):
 
     interaction = relationship("Interaction", back_populates="samples_dropped")
     product = relationship("Product")
+
+    @property
+    def product_name(self) -> str | None:
+        return self.product.name if self.product else None
 
 
 class MaterialShared(Base):
